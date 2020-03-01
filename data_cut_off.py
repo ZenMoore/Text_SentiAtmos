@@ -2,7 +2,6 @@ import os
 import pandas as pd
 from sklearn.utils import shuffle
 
-# todo 修改 train/val/test.txt， 包括文件格式和内容格式
 # 内容格式(train/val): ID1\tID2\tlabel\ttext\n
 # 内容格式(test): NA\tline_num\tunknwn\text\n
 # 文件格式: train.tsv, test.tsv, dev.tsv

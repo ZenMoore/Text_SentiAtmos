@@ -20,7 +20,7 @@ val_df_bert = pd.DataFrame({
     'label':val_set['label'],
     'text': val_set['text']
 })
-val_df_bert.to_csv('./dataset/original/val.tsv', sep='\t', index=False, header=True)
+val_df_bert.to_csv('./dataset/original/dev.tsv', sep='\t', index=False, header=True)
 
 #转换test.csv为test.tsv
 test_set =pd.read_csv("./dataset/original/test.csv",sep=',', header=0)

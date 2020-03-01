@@ -24,10 +24,10 @@ import os
 import modeling
 import optimization_finetuning as optimization
 import tokenization
-import tensorflow as tf
+import tensorflow-gpu as tf #todo cuda edit-config
 # from loss import bi_tempered_logistic_loss
 
-data_dir = './dataset/'
+data_dir = './dataset/original/'
 
 flags = tf.flags
 
@@ -210,17 +210,17 @@ class EmloProcessor(DataProcessor):
     def get_train_examples(self, data_dir):
         """定义开发集的数据是什么，data_dir会作为参数传进去， 这里就是加上你的文件名即可 """
         return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, "train.tsv"), ), "train") # todo 整理.txt为.tsv
+            self._read_tsv(os.path.join(data_dir, "train.tsv"), ), "train")
 
     def get_dev_examples(self, data_dir):
         """定义开发集的数据是什么，data_dir会作为参数传进去，模型训练的时候会用到，这里就是加上你的文件名即可 """
         return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, "dev.tsv")), "dev") # todo 整理val.txt为dev.tsv
+            self._read_tsv(os.path.join(data_dir, "dev.tsv")), "dev")
 
     def get_test_examples(self, data_dir):
         """定义测试集的数据是什么， 用于预测数据 ，在训练时没有用到这个函数， 这里写预测的数据集"""
         return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, "test.tsv")), "test") # todo 整理.txt为.tsv
+            self._read_tsv(os.path.join(data_dir, "test.tsv")), "test")
 
     def get_labels(self):
         """ 这里是显示你一共有几个分类标签， 在此任务中我有3个标签，如实写上  标签值和 csv里面存的值相同 """
