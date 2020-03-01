@@ -1,5 +1,5 @@
 import os
-import pandas as pd # todo 下载 pandas
+import pandas as pd
 from sklearn.utils import shuffle
 
 # todo 修改 train/val/test.txt， 包括文件格式和内容格式
@@ -18,5 +18,5 @@ if __name__ == '__main__':
 
     dev_set = pd_all.iloc[0:int(pd_all.shape[0]/10)]
     train_set = pd_all.iloc[int(pd_all.shape[0]/10): int(pd_all.shape[0])]
-    dev_set.to_csv("glue/dev.tsv", index=False, sep='\t')
-    train_set.to_csv("glue/train.tsv", index=False, sep='\t')
+    dev_set.to_csv("dataset/dev.tsv", index=False, sep='\t')
+    train_set.to_csv("dataset/train.tsv", index=False, sep='\t')

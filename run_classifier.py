@@ -224,7 +224,7 @@ class EmloProcessor(DataProcessor):
 
     def get_labels(self):
         """ 这里是显示你一共有几个分类标签， 在此任务中我有3个标签，如实写上  标签值和 csv里面存的值相同 """
-        return ["neutral", "positive", "negative"] # todo 修改标签
+        return ["不满", "低落", "愤怒", "开心", "喜悦", "厌恶"] # todo 修改标签
 
     def _create_examples(self, lines, set_type):
         """这个函数是用来把数据处理， 把每一个例子分成3个部分，填入到InputExample的3个参数
