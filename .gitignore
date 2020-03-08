@@ -1,4 +1,4 @@
 /.idea
-/albert_config
-/data
-/resources
+/albert_model
+/results
+/venv

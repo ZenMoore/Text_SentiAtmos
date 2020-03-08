@@ -24,10 +24,8 @@ import os
 import modeling
 import optimization_finetuning as optimization
 import tokenization
-import tensorflow-gpu as tf #todo cuda edit-config
+import tensorflow as tf
 # from loss import bi_tempered_logistic_loss
-
-data_dir = './dataset/original/'
 
 flags = tf.flags
 
@@ -224,7 +222,7 @@ class EmloProcessor(DataProcessor):
 
     def get_labels(self):
         """ 这里是显示你一共有几个分类标签， 在此任务中我有3个标签，如实写上  标签值和 csv里面存的值相同 """
-        return ["不满", "低落", "愤怒", "开心", "喜悦", "厌恶"] # todo 修改标签
+        return ["不满", "低落", "愤怒", "开心", "喜悦", "厌恶"] # todo our labels
 
     def _create_examples(self, lines, set_type):
         """这个函数是用来把数据处理， 把每一个例子分成3个部分，填入到InputExample的3个参数
@@ -242,7 +240,7 @@ class EmloProcessor(DataProcessor):
             text_a = tokenization.convert_to_unicode(line[3])
             if set_type == "test":
                 #测试集的label 是要预测的 所以我们暂时先随便填一个类别即可 这里我选择都是neutral类
-                label = "neutral"
+                label = "开心"
             else:
                 label = tokenization.convert_to_unicode(line[2])
 
@@ -465,6 +463,7 @@ def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
   #
   # If you want to use the token-level output, use model.get_sequence_output()
   # instead.
+  # todo add follow-up network: get_pooled_output or get_sequence_output(above annotate)
   output_layer = model.get_pooled_output()
 
   hidden_size = output_layer.shape[-1].value
@@ -658,95 +657,96 @@ def input_fn_builder(features, seq_length, is_training, drop_remainder):
 
   return input_fn
 
-class LCQMCPairClassificationProcessor(DataProcessor): # TODO NEED CHANGE2
-  """Processor for the internal data set. sentence pair classification"""
-  def __init__(self):
-    self.language = "zh"
-
-  def get_train_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_tsv(os.path.join(data_dir, "train.txt")), "train")
-    # dev_0827.tsv
-
-  def get_dev_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_tsv(os.path.join(data_dir, "dev.txt")), "dev")
-
-  def get_test_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_tsv(os.path.join(data_dir, "test.txt")), "test")
-
-  def get_labels(self):
-    """See base class."""
-    return ["0", "1"]
-    #return ["-1","0", "1"]
-
-  def _create_examples(self, lines, set_type):
-    """Creates examples for the training and dev sets."""
-    examples = []
-    print("length of lines:",len(lines))
-    for (i, line) in enumerate(lines):
-      #print('#i:',i,line)
-      if i == 0:
-        continue
-      guid = "%s-%s" % (set_type, i)
-      try:
-          label = tokenization.convert_to_unicode(line[2])
-          text_a = tokenization.convert_to_unicode(line[0])
-          text_b = tokenization.convert_to_unicode(line[1])
-          examples.append(
-              InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
-      except Exception:
-          print('###error.i:', i, line)
-    return examples
-
-class SentencePairClassificationProcessor(DataProcessor):
-  """Processor for the internal data set. sentence pair classification"""
-  def __init__(self):
-    self.language = "zh"
-
-  def get_train_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_tsv(os.path.join(data_dir, "train_0827.tsv")), "train")
-    # dev_0827.tsv
-
-  def get_dev_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_tsv(os.path.join(data_dir, "dev_0827.tsv")), "dev")
-
-  def get_test_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_tsv(os.path.join(data_dir, "test_0827.tsv")), "test")
-
-  def get_labels(self):
-    """See base class."""
-    return ["0", "1"]
-    #return ["-1","0", "1"]
-
-  def _create_examples(self, lines, set_type):
-    """Creates examples for the training and dev sets."""
-    examples = []
-    print("length of lines:",len(lines))
-    for (i, line) in enumerate(lines):
-      #print('#i:',i,line)
-      if i == 0:
-        continue
-      guid = "%s-%s" % (set_type, i)
-      try:
-          label = tokenization.convert_to_unicode(line[0])
-          text_a = tokenization.convert_to_unicode(line[1])
-          text_b = tokenization.convert_to_unicode(line[2])
-          examples.append(
-              InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
-      except Exception:
-          print('###error.i:', i, line)
-    return examples
+# 下面是用于词性标注的代码
+# class LCQMCPairClassificationProcessor(DataProcessor): # TODO NEED CHANGE2
+#   """Processor for the internal data set. sentence pair classification"""
+#   def __init__(self):
+#     self.language = "zh"
+#
+#   def get_train_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_tsv(os.path.join(data_dir, "train.txt")), "train")
+#     # dev_0827.tsv
+#
+#   def get_dev_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_tsv(os.path.join(data_dir, "dev.txt")), "dev")
+#
+#   def get_test_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_tsv(os.path.join(data_dir, "test.txt")), "test")
+#
+#   def get_labels(self):
+#     """See base class."""
+#     return ["0", "1"]
+#     #return ["-1","0", "1"]
+#
+#   def _create_examples(self, lines, set_type):
+#     """Creates examples for the training and dev sets."""
+#     examples = []
+#     print("length of lines:",len(lines))
+#     for (i, line) in enumerate(lines):
+#       #print('#i:',i,line)
+#       if i == 0:
+#         continue
+#       guid = "%s-%s" % (set_type, i)
+#       try:
+#           label = tokenization.convert_to_unicode(line[2])
+#           text_a = tokenization.convert_to_unicode(line[0])
+#           text_b = tokenization.convert_to_unicode(line[1])
+#           examples.append(
+#               InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
+#       except Exception:
+#           print('###error.i:', i, line)
+#     return examples
+#
+# class SentencePairClassificationProcessor(DataProcessor):
+#   """Processor for the internal data set. sentence pair classification"""
+#   def __init__(self):
+#     self.language = "zh"
+#
+#   def get_train_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_tsv(os.path.join(data_dir, "train_0827.tsv")), "train")
+#     # dev_0827.tsv
+#
+#   def get_dev_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_tsv(os.path.join(data_dir, "dev_0827.tsv")), "dev")
+#
+#   def get_test_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_tsv(os.path.join(data_dir, "test_0827.tsv")), "test")
+#
+#   def get_labels(self):
+#     """See base class."""
+#     return ["0", "1"]
+#     #return ["-1","0", "1"]
+#
+#   def _create_examples(self, lines, set_type):
+#     """Creates examples for the training and dev sets."""
+#     examples = []
+#     print("length of lines:",len(lines))
+#     for (i, line) in enumerate(lines):
+#       #print('#i:',i,line)
+#       if i == 0:
+#         continue
+#       guid = "%s-%s" % (set_type, i)
+#       try:
+#           label = tokenization.convert_to_unicode(line[0])
+#           text_a = tokenization.convert_to_unicode(line[1])
+#           text_b = tokenization.convert_to_unicode(line[2])
+#           examples.append(
+#               InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
+#       except Exception:
+#           print('###error.i:', i, line)
+#     return examples
 
 # This function is not used by this file but is still used by the Colab and
 # people who depend on it.
@@ -771,7 +771,6 @@ def main(_):
 
   processors = {
       "emlo": EmloProcessor
-
   }
 
   tokenization.validate_case_matches_checkpoint(FLAGS.do_lower_case,
