@@ -6,32 +6,44 @@ if __name__ == '__main__':
     path = "./results/"
     pd_all = pd.read_csv(os.path.join(path, "test_results.tsv") ,sep='\t',header=None)
 
-    data = pd.DataFrame(columns=['polarity'])
+    data = pd.DataFrame(columns=['label'])
     print(pd_all.shape)
 
+    # ["anger", "disgust", "fear", "happiness", "like", "none", "sadness", "surprise"]
     for index in pd_all.index:
-        dissatisfied_score = pd_all.loc[index].values[0]
-        low_score = pd_all.loc[index].values[1]
-        angry_score = pd_all.loc[index].values[2]
-        happy_score = pd_all.loc[index].values[3]
-        joy_score = pd_all.loc[index].values[4]
-        disgust_score = pd_all.loc[index].values[5]
+        anger_score = pd_all.loc[index].values[0]
+        disgust_score = pd_all.loc[index].values[1]
+        fear_score = pd_all.loc[index].values[2]
+        happiness_score = pd_all.loc[index].values[3]
+        like_score = pd_all.loc[index].values[4]
+        none_score = pd_all.loc[index].values[5]
+        sadness_score = pd_all.loc[index].values[6]
+        surprise_score = pd_all.loc[index].values[7]
 
-        if max(dissatisfied_score, low_score, angry_score,happy_score,joy_score,disgust_score) == dissatisfied_score:
+        if max(anger_score, disgust_score, fear_score,happiness_score,like_score,none_score, sadness_score, surprise_score) == anger_score:
             # data.append(pd.DataFrame([index, "neutral"],columns=['id','polarity']),ignore_index=True)
-            data.loc[index+1] = ["dissatisfied"]
-        elif max(dissatisfied_score, low_score, angry_score,happy_score,joy_score,disgust_score) == low_score:
+            data.loc[index+1] = ["anger"]
+        elif max(anger_score, disgust_score, fear_score,happiness_score,like_score,none_score, sadness_score, surprise_score) == disgust_score:
             #data.append(pd.DataFrame([index, "positive"],columns=['id','polarity']),ignore_index=True)
-            data.loc[index+1] = [ "low_score"]
-        elif max(dissatisfied_score, low_score, angry_score,happy_score,joy_score,disgust_score) == angry_score:
-            data.loc[index + 1] = ["angry_score"]
-        elif max(dissatisfied_score, low_score, angry_score,happy_score,joy_score,disgust_score) == happy_score:
-            data.loc[index + 1] = ["happy_score"]
-        elif max(dissatisfied_score, low_score, angry_score,happy_score,joy_score,disgust_score) == joy_score:
-            data.loc[index + 1] = ["joy_score"]
+            data.loc[index+1] = [ "disgust"]
+        elif max(anger_score, disgust_score, fear_score, happiness_score, like_score, none_score, sadness_score,
+                     surprise_score) == fear_score:
+            data.loc[index + 1] = ["fear"]
+        elif max(anger_score, disgust_score, fear_score, happiness_score, like_score, none_score, sadness_score,
+                     surprise_score) == happiness_score:
+            data.loc[index + 1] = ["happiness"]
+        elif max(anger_score, disgust_score, fear_score, happiness_score, like_score, none_score, sadness_score,
+                    surprise_score) == like_score:
+            data.loc[index + 1] = ["like"]
+        elif max(anger_score, disgust_score, fear_score, happiness_score, like_score, none_score, sadness_score,
+                    surprise_score) == none_score:
+            data.loc[index + 1] = ["none"]
+        elif max(anger_score, disgust_score, fear_score, happiness_score, like_score, none_score, sadness_score,
+                 surprise_score) == sadness_score:
+            data.loc[index + 1] = ["sadness"]
         else:
             #data.append(pd.DataFrame([index, "negative"],columns=['id','polarity']),ignore_index=True)
-            data.loc[index + 1] = ["disgust_score"]
+            data.loc[index + 1] = ["surprise"]
         #print(negative_score, positive_score, negative_score)
 
     data.to_csv(os.path.join(path, "pre_sample.tsv"),sep = '\t')

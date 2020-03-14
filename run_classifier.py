@@ -222,7 +222,7 @@ class EmloProcessor(DataProcessor):
 
     def get_labels(self):
         """ 这里是显示你一共有几个分类标签， 在此任务中我有3个标签，如实写上  标签值和 csv里面存的值相同 """
-        return ["不满", "低落", "愤怒", "开心", "喜悦", "厌恶"] # todo our labels
+        return ["anger", "disgust", "fear", "happiness", "like", "none", "sadness", "surprise"] # todo our labels
 
     def _create_examples(self, lines, set_type):
         """这个函数是用来把数据处理， 把每一个例子分成3个部分，填入到InputExample的3个参数
@@ -239,10 +239,13 @@ class EmloProcessor(DataProcessor):
             # 获取text  第三列和第四列分别是 类别  文本 所以分情况添加
             text_a = tokenization.convert_to_unicode(line[3])
             if set_type == "test":
-                #测试集的label 是要预测的 所以我们暂时先随便填一个类别即可 这里我选择都是neutral类
-                label = "开心"
+                #测试集的label 是要预测的 所以我们暂时先随便填一个类别即可 这里我选择都是none类
+                label = "none" # todo default unknwn for test data.
             else:
                 label = tokenization.convert_to_unicode(line[2])
+                if(label == "label"):
+                    label = "none"
+                print(label)
 
             # 加入样本
             examples.append(
@@ -446,6 +449,23 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
     else:
       tokens_b.pop()
 
+# 不含最后的全连接层和 softmax, 甚至不用 layer_normalization
+# add follow-up network: get_pooled_output or get_sequence_output(annotate in def_create_model)
+def follow_up_model(model, num_labels): # todo follow-up network
+    albert_out = model.get_pooled_output()
+
+    hidden_size = albert_out.shape[-1].value
+
+    placeholder_weights = tf.get_variable(
+        "placeholder_weights", [num_labels, hidden_size],
+        initializer=tf.truncated_normal_initializer(stddev=0.02))
+
+    placeholder_bias = tf.get_variable(
+        "placeholder_bias", [num_labels], initializer=tf.zeros_initializer())
+
+    output_layer = tf.tanh(tf.matmul(albert_out, placeholder_weights, transpose_b=True) + placeholder_bias)
+
+    return output_layer
 
 def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
                  labels, num_labels, use_one_hot_embeddings):
@@ -463,9 +483,9 @@ def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
   #
   # If you want to use the token-level output, use model.get_sequence_output()
   # instead.
-  # todo add follow-up network: get_pooled_output or get_sequence_output(above annotate)
-  output_layer = model.get_pooled_output()
 
+  output_layer = follow_up_model(model, num_labels)
+  
   hidden_size = output_layer.shape[-1].value
 
   output_weights = tf.get_variable(
