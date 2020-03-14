@@ -124,7 +124,6 @@ flags.DEFINE_integer(
     "num_tpu_cores", 8,
     "Only used if `use_tpu` is True. Total number of TPU cores to use.")
 
-
 class InputExample(object):
   """A single training/test example for simple sequence classification."""
 
@@ -449,21 +448,75 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
     else:
       tokens_b.pop()
 
+class RNN_Config(object):
+
+    num_layers = 2  # 隐藏层层数
+    hidden_dim = 128  # 隐藏层神经元
+    rnn = 'gru'  # lstm 或 gru
+
+    dropout_keep_prob = 0.8  # dropout保留比例
+    hidden_dropout_keep_prob = 0.0 # todo 这里最好和 albert_config 匹配
+
+    batch_size = 128  # 每批训练大小
+    num_epochs = 10  # 总迭代轮次
+
 # 不含最后的全连接层和 softmax, 甚至不用 layer_normalization
 # add follow-up network: get_pooled_output or get_sequence_output(annotate in def_create_model)
-def follow_up_model(model, num_labels): # todo follow-up network
+def rnn_follow(model, num_labels): # todo follow-up network with rnn
+    # albert_out = model.get_pooled_output()
+    #
+    # hidden_size = albert_out.shape[-1].value
+    # print(hidden_size)
+    #
+    # placeholder_weights = tf.get_variable(
+    #     "placeholder_weights", [num_labels, hidden_size],
+    #     initializer=tf.truncated_normal_initializer(stddev=0.02))
+    #
+    # placeholder_bias = tf.get_variable(
+    #     "placeholder_bias", [num_labels], initializer=tf.zeros_initializer())
+    #
+    # output_layer = tf.tanh(tf.matmul(albert_out, placeholder_weights, transpose_b=True) + placeholder_bias)
+
+
+    """rnn模型"""
+    config = RNN_Config()
+
+
+    def lstm_cell():  # lstm核
+        return tf.contrib.rnn.BasicLSTMCell(config.hidden_dim, state_is_tuple=True)
+
+    def gru_cell():  # gru核
+        return tf.contrib.rnn.GRUCell(config.hidden_dim)
+
+    def dropout():  # 为每一个rnn核后面加一个dropout层
+        if (config.rnn == 'lstm'):
+            cell = lstm_cell()
+        else:
+            cell = gru_cell()
+        return tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=config.hidden_dropout_keep_prob)
+
     albert_out = model.get_pooled_output()
 
     hidden_size = albert_out.shape[-1].value
 
-    placeholder_weights = tf.get_variable(
-        "placeholder_weights", [num_labels, hidden_size],
-        initializer=tf.truncated_normal_initializer(stddev=0.02))
+    albert_out = tf.expand_dims(albert_out, [-1])
+    print(albert_out)
 
-    placeholder_bias = tf.get_variable(
-        "placeholder_bias", [num_labels], initializer=tf.zeros_initializer())
+    with tf.name_scope("rnn"):
+        # 多层rnn网络
+        cells = [dropout() for _ in range(config.num_layers)]
+        rnn_cell = tf.contrib.rnn.MultiRNNCell(cells, state_is_tuple=True)
 
-    output_layer = tf.tanh(tf.matmul(albert_out, placeholder_weights, transpose_b=True) + placeholder_bias)
+        _outputs, _ = tf.nn.dynamic_rnn(cell=rnn_cell, inputs=albert_out, dtype=tf.float32)
+        last = _outputs[:, -1, :]  # 取最后一个时序输出作为结果
+        print(last)
+
+
+    with tf.name_scope("pre-fully"):
+        # 全连接层，后面接dropout以及relu激活
+        fc = tf.layers.dense(last, config.hidden_dim, name='fc1')
+        fc = tf.contrib.layers.dropout(fc, config.hidden_dropout_keep_prob)
+        output_layer = tf.nn.relu(fc)
 
     return output_layer
 
@@ -484,7 +537,8 @@ def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
   # If you want to use the token-level output, use model.get_sequence_output()
   # instead.
 
-  output_layer = follow_up_model(model, num_labels)
+  output_layer = rnn_follow(model, num_labels)
+  # output_layer = model.get_pooled_output();
   
   hidden_size = output_layer.shape[-1].value
 
