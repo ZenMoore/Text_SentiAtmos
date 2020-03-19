@@ -221,7 +221,7 @@ class EmloProcessor(DataProcessor):
 
     def get_labels(self):
         """ 这里是显示你一共有几个分类标签， 在此任务中我有3个标签，如实写上  标签值和 csv里面存的值相同 """
-        return ["anger", "disgust", "fear", "happiness", "like", "none", "sadness", "surprise"] # todo our labels
+        return ["不满", "低落", "愤怒", "开心", "喜悦", "厌恶"] # todo our labels
 
     def _create_examples(self, lines, set_type):
         """这个函数是用来把数据处理， 把每一个例子分成3个部分，填入到InputExample的3个参数
@@ -239,12 +239,9 @@ class EmloProcessor(DataProcessor):
             text_a = tokenization.convert_to_unicode(line[3])
             if set_type == "test":
                 #测试集的label 是要预测的 所以我们暂时先随便填一个类别即可 这里我选择都是none类
-                label = "none" # todo default unknwn for test data.
+                label = "开心" # todo default unknwn for test data.
             else:
                 label = tokenization.convert_to_unicode(line[2])
-                if(label == "label"):
-                    label = "none"
-                print(label)
 
             # 加入样本
             examples.append(
@@ -448,14 +445,14 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
     else:
       tokens_b.pop()
 
-class RNN_Config(object):
+class RNN_Config(object): # todo 这里最好和 albert_config 匹配
 
-    num_layers = 2  # 隐藏层层数
+    num_layers = 3  # 隐藏层层数
     hidden_dim = 128  # 隐藏层神经元
-    rnn = 'gru'  # lstm 或 gru
+    rnn = 'lstm'  # lstm 或 gru
 
     dropout_keep_prob = 0.8  # dropout保留比例
-    hidden_dropout_keep_prob = 0.0 # todo 这里最好和 albert_config 匹配
+    hidden_dropout_keep_prob = 1.0
 
     batch_size = 128  # 每批训练大小
     num_epochs = 10  # 总迭代轮次
@@ -499,7 +496,7 @@ def rnn_follow(model, num_labels): # todo follow-up network with rnn
 
     hidden_size = albert_out.shape[-1].value
 
-    albert_out = tf.expand_dims(albert_out, [-1])
+    albert_out = tf.expand_dims(albert_out, [-1]) # todo 关于这个的理论推导
     print(albert_out)
 
     with tf.name_scope("rnn"):
@@ -508,7 +505,7 @@ def rnn_follow(model, num_labels): # todo follow-up network with rnn
         rnn_cell = tf.contrib.rnn.MultiRNNCell(cells, state_is_tuple=True)
 
         _outputs, _ = tf.nn.dynamic_rnn(cell=rnn_cell, inputs=albert_out, dtype=tf.float32)
-        last = _outputs[:, -1, :]  # 取最后一个时序输出作为结果
+        last = _outputs[:, -1, :]  # 取最后一个时序输出作为结果 # todo 关于这个的理论推导
         print(last)
 
 
@@ -537,7 +534,7 @@ def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
   # If you want to use the token-level output, use model.get_sequence_output()
   # instead.
 
-  output_layer = rnn_follow(model, num_labels)
+  output_layer = rnn_follow(model, num_labels) # todo change follow-up network
   # output_layer = model.get_pooled_output();
   
   hidden_size = output_layer.shape[-1].value
@@ -1015,6 +1012,7 @@ def main(_):
 
   if FLAGS.do_predict:
     predict_examples = processor.get_test_examples(FLAGS.data_dir)
+    print(predict_examples)
     num_actual_predict_examples = len(predict_examples)
     if FLAGS.use_tpu:
       # TPU requires a fixed batch size for all batches, therefore the number
