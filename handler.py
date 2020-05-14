@@ -83,30 +83,63 @@ def transformer(dir):
 if __name__ == '__main__':
 
     dir = './text'
-    input_article = dir+'/article.txt'
-    seg_article = dir+'/seg_article.txt'
-    test_file = dir+'/test.csv'
+    pos = 0
 
-    # 长文本分句
-    get_sentences(input_article, seg_article, test_file)
+    while True:
+        if os.path.exists("./text/o.temp"):
 
-    # 文件格式转换
-    transformer(dir)
-    #
-    # 预测结果
-    os.system('python run_classifier.py '
-              '--task_name=emlo '
-              '--do_predict=true '
-              '--data_dir='+dir+' '
-              '--vocab_file=./albert_model/vocab.txt '
-              '--bert_config_file=./albert_model/albert_config_tiny.json '
-              '--init_checkpoint=./best_model/model.ckpt-28000 '
-              '--max_seq_length=128 '
-              '--output_dir=./results')
+            input_article = dir+'/article.txt'
+            seg_article = dir+'/seg_article.txt'
+            test_file = dir+'/test.csv'
 
-    # 解析结果
-    sentiment = get_results.run('./results')
+            # 长文本分句
+            get_sentences(input_article, seg_article, test_file)
 
-    # 播放音频
-    print(sentiment)
-    player.run(sentiment)
+            # 文件格式转换
+            transformer(dir)
+            #
+            # 预测结果
+            os.system('python run_classifier.py '
+                      '--task_name=emlo '
+                      '--do_predict=true '
+                      '--data_dir='+dir+' '
+                      '--vocab_file=./albert_model/vocab.txt '
+                      '--bert_config_file=./albert_model/albert_config_tiny.json '
+                      '--init_checkpoint=./best_model/model.ckpt-28000 '
+                      '--max_seq_length=128 '
+                      '--output_dir=./results')
+
+            # 解析结果
+            sentiment = get_results.run('./results')
+
+            # 播放音频
+            print(sentiment)
+            file = open("D:/Java/J Workplace/sentiatmos/senti.txt", 'w')
+            sentinum = 0
+            if sentiment == '不满':
+                sentinum = 0
+            elif sentiment == '低落':
+                sentinum = 1
+            elif sentiment == '愤怒':
+                sentinum = 2
+            elif sentiment == '开心':
+                sentinum = 3
+            elif sentiment == '喜悦':
+                sentinum = 4
+            else:
+                sentinum = 5
+            file.write(str(sentinum))
+            file.flush()
+            file.close()
+            player.run(sentiment)
+
+
+            # if pos == 0:
+            #     player.run("喜悦")
+            #     pos += 1
+            # else:
+            #     player.run("低落")
+
+
+
+        else: pass
